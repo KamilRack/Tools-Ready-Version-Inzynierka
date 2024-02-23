@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Narzedzia.Data;
 using Narzedzia.Models;
+using OfficeOpenXml;
 
 namespace Narzedzia.Controllers
 {
@@ -24,7 +25,43 @@ namespace Narzedzia.Controllers
             _dal = dal;
 
         }
+        // Akcja eksportu danych do pliku Excel
+        public IActionResult ExportToExcel()
+        {
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
+            var stanowiska = _context.Stanowiska.ToList();
+
+            using (var package = new ExcelPackage())
+            {
+                var worksheet = package.Workbook.Worksheets.Add("Stanowiska");
+
+                // Dodaj nagłówki
+                worksheet.Cells[1, 1].Value = "Identyfikator stanowiska";
+                worksheet.Cells[1, 2].Value = "Nazwa stanowiska";
+                worksheet.Cells[1, 3].Value = "Czy stanowisko aktywne";
+
+                // Dodaj dane
+                for (int i = 0; i < stanowiska.Count; i++)
+                {
+                    var stanowisko = stanowiska[i];
+
+                    worksheet.Cells[i + 2, 1].Value = stanowisko.StanowiskoId;
+                    worksheet.Cells[i + 2, 2].Value = stanowisko.NazwaStanowiska;
+                    worksheet.Cells[i + 2, 3].Value = stanowisko.Active ? "Tak" : "Nie";
+                }
+
+                // Zapisz plik
+                var stream = new MemoryStream();
+                package.SaveAs(stream);
+
+                // Zwróć plik
+                var fileName = "Stanowiska.xlsx";
+                var contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                stream.Position = 0;
+                return File(stream, contentType, fileName);
+            }
+        }
         // GET: Stanowiska
         public async Task<IActionResult> Index()
         {

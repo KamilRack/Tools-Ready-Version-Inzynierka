@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Narzedzia.Data;
 using Narzedzia.Models;
+using OfficeOpenXml;
 
 namespace Narzedzia.Controllers
 {
@@ -20,6 +21,43 @@ namespace Narzedzia.Controllers
         public ProducenciController(ApplicationDbContext context)
         {
             _context = context;
+        }
+        // Akcja eksportu danych do pliku Excel
+        public IActionResult ExportToExcel()
+        {
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            var producenci = _context.Producenci.ToList();
+
+            using (var package = new ExcelPackage())
+            {
+                var worksheet = package.Workbook.Worksheets.Add("Producenci");
+
+                // Dodaj nagłówki
+                worksheet.Cells[1, 1].Value = "Identyfikator producenta";
+                worksheet.Cells[1, 2].Value = "Nazwa producenta";
+                worksheet.Cells[1, 3].Value = "Czy producent aktywny";
+
+                // Dodaj dane
+                for (int i = 0; i < producenci.Count; i++)
+                {
+                    var producent = producenci[i];
+
+                    worksheet.Cells[i + 2, 1].Value = producent.ProducentId;
+                    worksheet.Cells[i + 2, 2].Value = producent.NazwaProducenta;
+                    worksheet.Cells[i + 2, 3].Value = producent.Active ? "Tak" : "Nie";
+                }
+
+                // Zapisz plik
+                var stream = new MemoryStream();
+                package.SaveAs(stream);
+
+                // Zwróć plik
+                var fileName = "Producenci.xlsx";
+                var contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                stream.Position = 0;
+                return File(stream, contentType, fileName);
+            }
         }
 
         // GET: Producenci

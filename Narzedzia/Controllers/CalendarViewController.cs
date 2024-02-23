@@ -15,12 +15,17 @@ namespace Narzedzia.Controllers
         private readonly IDAL _dal;
 
 
+        private readonly ApplicationDbContext _context;
+        private readonly ApplicationDbContext _dbContext;
 
-        public CalendarViewController(ILogger<CalendarViewController> logger, IDAL idal, IDAL dal)
+
+        public CalendarViewController(ILogger<CalendarViewController> logger, IDAL idal, IDAL dal, ApplicationDbContext context, ApplicationDbContext dbContext)
         {
             _logger = logger;
             _idal = idal;
             _dal = dal;
+            _context = context;
+            _dbContext = dbContext;
         }
         public IActionResult CalendarVW()
         {
@@ -52,23 +57,6 @@ namespace Narzedzia.Controllers
 */            return View(viewModel);
 
         }
-
-        // Dodaj tę akcję, która będzie obsługiwać przekierowanie po dodaniu nowego wydarzenia
-        public IActionResult CreateEventAndRedirectToCalendarVW(EventsViewModel vm, IFormCollection form)
-        {
-            try
-            {
-                _dal.CreateEvent(form);
-                TempData["Alert"] = "Success! You created a new event for: " + form["Event.Name"];
-                return RedirectToAction("CalendarVW");
-            }
-            catch (Exception ex)
-            {
-                ViewData["Alert"] = "An error occurred: " + ex.Message;
-                return RedirectToAction("CalendarVW"); // Możesz dostosować to przekierowanie, jeśli to konieczne
-            }
-        }
-
 
 
 

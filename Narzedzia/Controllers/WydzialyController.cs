@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Narzedzia.Data;
 using Narzedzia.Models;
+using OfficeOpenXml;
 
 namespace Narzedzia.Controllers
 {
@@ -23,7 +24,45 @@ namespace Narzedzia.Controllers
             _idal = idal;
 
         }
+        // Akcja eksportu danych do pliku Excel
+        public IActionResult ExportToExcel()
+        {
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
+            var wydzialy = _context.Wydzialy
+                            .Include(w => w.Uzytkownicy)
+                            .Include(w => w.Awarie)
+                            .Include(w => w.Events)
+                            .ToList();
+
+            using (var package = new ExcelPackage())
+            {
+                var worksheet = package.Workbook.Worksheets.Add("Wydzialy");
+
+                // Dodaj nagłówki
+                worksheet.Cells[1, 1].Value = "Nazwa wydziału";
+                worksheet.Cells[1, 2].Value = "Aktywny";
+
+                // Dodaj dane
+                for (int i = 0; i < wydzialy.Count; i++)
+                {
+                    var wydzial = wydzialy[i];
+
+                    worksheet.Cells[i + 2, 1].Value = wydzial.NazwaWydzialu;
+                    worksheet.Cells[i + 2, 2].Value = wydzial.Active ? "Tak" : "Nie";
+                }
+
+                // Zapisz plik
+                var stream = new MemoryStream();
+                package.SaveAs(stream);
+
+                // Zwróć plik
+                var fileName = "Wydzialy.xlsx";
+                var contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                stream.Position = 0;
+                return File(stream, contentType, fileName);
+            }
+        }
         // GET: Wydzialy
         public async Task<IActionResult> Index()
         {

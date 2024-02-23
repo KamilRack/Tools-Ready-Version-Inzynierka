@@ -12,18 +12,76 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 using Narzedzia.Controllers;
+using OfficeOpenXml;
+
 namespace Narzedzia.Controllers
 {
     public class EventsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly ApplicationDbContext _dbContext;
         private readonly IDAL _dal;
 
-        public EventsController(IDAL dal)
+        public EventsController(IDAL dal, ApplicationDbContext context, ApplicationDbContext dbContext)
         {
             _dal = dal;
+            _context = context;
+            _dbContext = dbContext;
+
         }
 
+
+        // Akcja eksportu danych do pliku Excel
+        public IActionResult ExportToExcel()
+        {
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            var events = _context.Events
+                .Include(e => e.Narzedzie)
+                .Include(e => e.Stanowisko)
+                .Include(e => e.Wydzial)
+                .ToList();
+
+            using (var package = new ExcelPackage())
+            {
+                var worksheet = package.Workbook.Worksheets.Add("Events");
+
+                // Dodaj nagłówki
+                worksheet.Cells[1, 1].Value = "ID";
+                worksheet.Cells[1, 2].Value = "Temat";
+                worksheet.Cells[1, 3].Value = "Opis";
+                worksheet.Cells[1, 4].Value = "Data od";
+                worksheet.Cells[1, 5].Value = "Data do";
+                worksheet.Cells[1, 6].Value = "Narzędzie";
+                worksheet.Cells[1, 7].Value = "Stanowisko";
+                worksheet.Cells[1, 8].Value = "Wydział";
+
+                // Dodaj dane
+                for (int i = 0; i < events.Count; i++)
+                {
+                    var eventItem = events[i];
+
+                    worksheet.Cells[i + 2, 1].Value = eventItem.IdCal;
+                    worksheet.Cells[i + 2, 2].Value = eventItem.NameCal;
+                    worksheet.Cells[i + 2, 3].Value = eventItem.DescriptionCal;
+                    worksheet.Cells[i + 2, 4].Value = eventItem.StartCal.ToString("dd.MM.yyyy");
+                    worksheet.Cells[i + 2, 5].Value = eventItem.EndCal.ToString("dd.MM.yyyy");
+                    worksheet.Cells[i + 2, 6].Value = eventItem.Narzedzie?.Nazwa;
+                    worksheet.Cells[i + 2, 7].Value = eventItem.Stanowisko?.NazwaStanowiska;
+                    worksheet.Cells[i + 2, 8].Value = eventItem.Wydzial?.NazwaWydzialu;
+                }
+
+                // Zapisz plik
+                var stream = new MemoryStream();
+                package.SaveAs(stream);
+
+                // Zwróć plik
+                var fileName = "Wydarzenia_Kalendarz.xlsx";
+                var contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                stream.Position = 0;
+                return File(stream, contentType, fileName);
+            }
+        }
         // GET: Events
         public IActionResult Index()
         {
@@ -52,6 +110,7 @@ namespace Narzedzia.Controllers
             return View(@events);
         }
 
+
         // GET: Events/Create
         public IActionResult Create()
         {
@@ -76,49 +135,17 @@ namespace Narzedzia.Controllers
             try
             {
                 _dal.CreateEvent(form);
-                TempData["Alert"] = "Success! You created a new event for: " + form["Event.Name"];
+                TempData["Alert"] = "Dodałeś nowe wydarzenie:: " + form["Event.Name"];
                 return RedirectToAction("Index");
             }
             catch (Exception ex)
             {
-                ViewData["Alert"] = "An error occurred: " + ex.Message;
+                ViewData["Alert"] = "Błąd:: " + ex.Message;
                 return View(vm);
             }
         }
 
-        // GET: Events/Create
-        public IActionResult Create1()
-        {
-
-            var wydzials = _dal.GetWydzials();
-            var stanowiskos = _dal.GetStanowiskos();
-            var narzedzias = _dal.GetNarzedzias();
-
-            return View(new EventsViewModel(wydzials, stanowiskos, narzedzias));
-
-        }
-
-
-        // POST: Events/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create1(EventsViewModel vm, IFormCollection form)
-        {
-
-            try
-            {
-                _dal.CreateEvent(form);
-                TempData["Alert"] = "Success! You created a new event for: " + form["Event.Name"];
-                return RedirectToAction("CreateEventAndRedirectToCalendarVW", "CalendarView");
-            }
-            catch (Exception ex)
-            {
-                ViewData["Alert"] = "An error occurred: " + ex.Message;
-                return View(vm);
-            }
-        }
+ 
         // GET: Events/Edit/5
         public IActionResult Edit(int? id)
         {

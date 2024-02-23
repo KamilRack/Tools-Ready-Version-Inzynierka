@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Narzedzia.Data;
 using Narzedzia.Models;
+using OfficeOpenXml;
 
 namespace Narzedzia.Controllers
 {
@@ -24,7 +25,50 @@ namespace Narzedzia.Controllers
             _roleManager = roleManager;
         }
 
+        public IActionResult ExportToExcel()
+        {
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
+
+            var uzytkownicy = _context.Uzytkownicy
+                                .Include(u => u.Wydzialy)
+                                .Include(u => u.Stanowiska)
+                                .ToList();
+
+            using (var package = new ExcelPackage())
+            {
+                var worksheet = package.Workbook.Worksheets.Add("Uzytkownicy");
+
+                // Dodaj nagłówki
+                worksheet.Cells[1, 1].Value = "Imię użytkownika";
+                worksheet.Cells[1, 2].Value = "Nazwisko użytkownika";
+                worksheet.Cells[1, 3].Value = "Numer kontrolny";
+                worksheet.Cells[1, 4].Value = "Wydział";
+                worksheet.Cells[1, 5].Value = "Stanowisko";
+
+                // Dodaj dane
+                for (int i = 0; i < uzytkownicy.Count; i++)
+                {
+                    var uzytkownik = uzytkownicy[i];
+
+                    worksheet.Cells[i + 2, 1].Value = uzytkownik.Imie;
+                    worksheet.Cells[i + 2, 2].Value = uzytkownik.Nazwisko;
+                    worksheet.Cells[i + 2, 3].Value = uzytkownik.NrKontrolny;
+                    worksheet.Cells[i + 2, 4].Value = uzytkownik.Wydzialy?.NazwaWydzialu;
+                    worksheet.Cells[i + 2, 5].Value = uzytkownik.Stanowiska?.NazwaStanowiska;
+                }
+
+                // Zapisz plik
+                var stream = new MemoryStream();
+                package.SaveAs(stream);
+
+                // Zwróć plik
+                var fileName = "Uzytkownicy.xlsx";
+                var contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                stream.Position = 0;
+                return File(stream, contentType, fileName);
+            }
+        }
         // GET: Uzytkownicy
         public async Task<IActionResult> Index()
         {

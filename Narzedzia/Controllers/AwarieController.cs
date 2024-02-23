@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Narzedzia.Data;
 using Narzedzia.Models;
 using Microsoft.AspNetCore.SignalR;
-
+using OfficeOpenXml;
 
 namespace Narzedzia.Controllers
 {
@@ -28,7 +28,56 @@ namespace Narzedzia.Controllers
             _dbContext = dbContext;
         }
 
+        // Akcja eksportu danych do pliku Excel
+        public IActionResult ExportToExcel()
+        {
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
+            var awarie = _context.Awarie
+                .Include(a => a.Narzedzie)
+                .Include(a => a.Uzytkownicy)
+                .ToList();
+
+            using (var package = new ExcelPackage())
+            {
+                var worksheet = package.Workbook.Worksheets.Add("Awarie");
+
+                // Dodaj nagłówki
+                worksheet.Cells[1, 1].Value = "ID Awarii";
+                worksheet.Cells[1, 2].Value = "Nazwa Narzędzia";
+                worksheet.Cells[1, 3].Value = "Opis Awarii";
+                worksheet.Cells[1, 4].Value = "Numer Telefonu";
+                worksheet.Cells[1, 5].Value = "Data Przyjęcia";
+                worksheet.Cells[1, 6].Value = "Użytkownik Zgłaszający";
+                worksheet.Cells[1, 7].Value = "Status Awarii";
+                worksheet.Cells[1, 8].Value = "Notatka Techniczna";
+
+                // Dodaj dane
+                for (int i = 0; i < awarie.Count; i++)
+                {
+                    var awaria = awarie[i];
+
+                    worksheet.Cells[i + 2, 1].Value = awaria.IdAwaria;
+                    worksheet.Cells[i + 2, 2].Value = awaria.Narzedzie?.Nazwa;
+                    worksheet.Cells[i + 2, 3].Value = awaria.DescriptionAwaria;
+                    worksheet.Cells[i + 2, 4].Value = awaria.NumberAwaria;
+                    worksheet.Cells[i + 2, 5].Value = awaria.DataPrzyjecia.ToString("dd.MM.yyyy");
+                    worksheet.Cells[i + 2, 6].Value = awaria.Uzytkownicy?.Imie_Nazwisko;
+                    worksheet.Cells[i + 2, 7].Value = awaria.Status.ToString();
+                    worksheet.Cells[i + 2, 8].Value = awaria.NotatkaTechniczna;
+                }
+
+                // Zapisz plik
+                var stream = new MemoryStream();
+                package.SaveAs(stream);
+
+                // Zwróć plik
+                var fileName = "Awarie.xlsx";
+                var contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                stream.Position = 0;
+                return File(stream, contentType, fileName);
+            }
+        }
 
 
 

@@ -153,52 +153,7 @@
  <div class="text-center">
      <h1 class="form-header tools-header oswald_500"></h1>
  
-@*     <!-- Modal dla harmonogramu narzędzia -->
-    <div class="modal fade" id="createEventModalHarmonogram" tabindex="-1" aria-labelledby="createEventModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="createEventModalLabel">Dodaj harmonogram narzędzia.</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <!-- Tutaj załaduj zawartość Create.cshtml lub dostosuj formularz według potrzeb -->
-                    @{
-                        Html.RenderPartial("~/Views/CalendarView/_CreateEventsPartialVW.cshtml");
-                    }
-
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Przycisk otwierający modal dla utworzenia harmonogramu -->
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createEventModalHarmonogram">
-        Utwórz harmonogram
-    </button>
-
-    <!-- Modal dla spotkania -->
-    <div class="modal fade" id="createEventModalSpotkanie" tabindex="-1" aria-labelledby="createEventModalLabel1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="createEventModalLabel1">Dodaj nowe spotkanie.</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <!-- Tutaj załaduj zawartość odpowiedniego widoku w zależności od event-type -->
-                    @{
-                        Html.RenderPartial("~/Views/CalendarView/_CreateEventsPartialMeeting.cshtml");
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Przycisk otwierający modal dla utworzenia spotkania -->
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createEventModalSpotkanie">
-        Utwórz spotkanie
-    </button> *@
+  
  
     <div id="calendar"></div>
  </div>

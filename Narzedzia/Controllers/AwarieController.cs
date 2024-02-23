@@ -36,6 +36,7 @@ namespace Narzedzia.Controllers
             var awarie = _context.Awarie
                 .Include(a => a.Narzedzie)
                 .Include(a => a.Uzytkownicy)
+                .Include(a => a.UzytkownikRealizujacy)
                 .ToList();
 
             using (var package = new ExcelPackage())
@@ -51,6 +52,8 @@ namespace Narzedzia.Controllers
                 worksheet.Cells[1, 6].Value = "Użytkownik Zgłaszający";
                 worksheet.Cells[1, 7].Value = "Status Awarii";
                 worksheet.Cells[1, 8].Value = "Notatka Techniczna";
+                worksheet.Cells[1, 9].Value = "Użytkownik realizujący";
+
 
                 // Dodaj dane
                 for (int i = 0; i < awarie.Count; i++)
@@ -65,6 +68,8 @@ namespace Narzedzia.Controllers
                     worksheet.Cells[i + 2, 6].Value = awaria.Uzytkownicy?.Imie_Nazwisko;
                     worksheet.Cells[i + 2, 7].Value = awaria.Status.ToString();
                     worksheet.Cells[i + 2, 8].Value = awaria.NotatkaTechniczna;
+                    worksheet.Cells[i + 2, 9].Value = awaria.UzytkownikRealizujacy.Imie_Nazwisko;
+
                 }
 
                 // Zapisz plik

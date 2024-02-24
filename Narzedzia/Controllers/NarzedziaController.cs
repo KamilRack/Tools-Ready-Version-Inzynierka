@@ -23,42 +23,46 @@ namespace Narzedzia.Controllers
         {
             _context = context;
         }
+        // Akcja eksportu danych narzędzi do pliku Excel
         public IActionResult ExportToExcel()
         {
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
-            var awarie = _context.Awarie
-                .Include(a => a.Narzedzie)
-                .Include(a => a.Uzytkownicy)
+            var narzedzia = _context.Narzedzia
+                .Include(n => n.Producenci)
+                .Include(n => n.Kategorie)
+                .Include(n => n.Uzytkownicy)
                 .ToList();
 
             using (var package = new ExcelPackage())
             {
-                var worksheet = package.Workbook.Worksheets.Add("Awarie");
+                var worksheet = package.Workbook.Worksheets.Add("Narzędzia");
 
                 // Dodaj nagłówki
-                worksheet.Cells[1, 1].Value = "ID Awarii";
-                worksheet.Cells[1, 2].Value = "Nazwa Narzędzia";
-                worksheet.Cells[1, 3].Value = "Opis Awarii";
-                worksheet.Cells[1, 4].Value = "Numer Telefonu";
-                worksheet.Cells[1, 5].Value = "Data Przyjęcia";
-                worksheet.Cells[1, 6].Value = "Użytkownik Zgłaszający";
-                worksheet.Cells[1, 7].Value = "Status Awarii";
-                worksheet.Cells[1, 8].Value = "Notatka Techniczna";
+                worksheet.Cells[1, 1].Value = "ID Narzędzia";
+                worksheet.Cells[1, 2].Value = "Producent";
+                worksheet.Cells[1, 3].Value = "Kategoria";
+                worksheet.Cells[1, 4].Value = "Data Przyjęcia";
+                worksheet.Cells[1, 5].Value = "Użytkownik";
+                worksheet.Cells[1, 6].Value = "Numer Narzędzia";
+                worksheet.Cells[1, 7].Value = "Nazwa";
+                worksheet.Cells[1, 8].Value = "Status";
+                worksheet.Cells[1, 9].Value = "Uwagi";
 
                 // Dodaj dane
-                for (int i = 0; i < awarie.Count; i++)
+                for (int i = 0; i < narzedzia.Count; i++)
                 {
-                    var awaria = awarie[i];
+                    var narzedzie = narzedzia[i];
 
-                    worksheet.Cells[i + 2, 1].Value = awaria.IdAwaria;
-                    worksheet.Cells[i + 2, 2].Value = awaria.Narzedzie?.Nazwa;
-                    worksheet.Cells[i + 2, 3].Value = awaria.DescriptionAwaria;
-                    worksheet.Cells[i + 2, 4].Value = awaria.NumberAwaria;
-                    worksheet.Cells[i + 2, 5].Value = awaria.DataPrzyjecia.ToString("dd.MM.yyyy");
-                    worksheet.Cells[i + 2, 6].Value = awaria.Uzytkownicy?.Imie_Nazwisko;
-                    worksheet.Cells[i + 2, 7].Value = awaria.Status.ToString();
-                    worksheet.Cells[i + 2, 8].Value = awaria.NotatkaTechniczna;
+                    worksheet.Cells[i + 2, 1].Value = narzedzie.NarzedzieId;
+                    worksheet.Cells[i + 2, 2].Value = narzedzie.Producenci?.NazwaProducenta;
+                    worksheet.Cells[i + 2, 3].Value = narzedzie.Kategorie?.NazwaKategorii;
+                    worksheet.Cells[i + 2, 4].Value = narzedzie.DataPrzyjecia.ToString("dd.MM.yyyy");
+                    worksheet.Cells[i + 2, 5].Value = narzedzie.Uzytkownicy?.Imie_Nazwisko;
+                    worksheet.Cells[i + 2, 6].Value = narzedzie.NumerNarzedzia;
+                    worksheet.Cells[i + 2, 7].Value = narzedzie.Nazwa;
+                    worksheet.Cells[i + 2, 8].Value = narzedzie.Status.ToString();
+                    worksheet.Cells[i + 2, 9].Value = narzedzie.Uwagi;
                 }
 
                 // Zapisz plik
@@ -66,7 +70,7 @@ namespace Narzedzia.Controllers
                 package.SaveAs(stream);
 
                 // Zwróć plik
-                var fileName = "Awarie.xlsx";
+                var fileName = "Narzedzia.xlsx";
                 var contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
                 stream.Position = 0;
                 return File(stream, contentType, fileName);
